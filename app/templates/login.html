@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Login - Skincare Analytics{% endblock %}
+
+{% block content %}
+<div class="auth-page pt-5">
+    <div class="container">
+        <div class="row justify-content-center align-items-center" style="min-height: 80vh;">
+            <div class="col-md-5">
+                <div class="auth-card glass-card p-4 rounded-4 shadow-sm border-0">
+                    <div class="text-center mb-4">
+                        <div class="brand-icon mx-auto mb-3 bg-light text-dark rounded-circle shadow-sm" style="width: 60px; height: 60px; font-size: 2rem;">
+                            <i class="bi bi-droplet-fill"></i>
+                        </div>
+                        <h2>Welcome Back</h2>
+                        <p class="text-muted">Login to access your personalized skincare insights</p>
+                    </div>
+
+                    <form method="POST" action="{{ url_for('auth.login') }}" novalidate>
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email Address</label>
+                            <input type="email" class="form-control" id="email" name="email" required
+                                pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$" placeholder="Enter your email">
+                            <div class="invalid-feedback">
+                                Please enter a valid email address.
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Password</label>
+                            <input type="password" class="form-control" id="password" name="password" required
+                                minlength="6" placeholder="Enter your password">
+                            <div class="invalid-feedback">
+                                Password must be at least 6 characters long.
+                            </div>
+                        </div>
+
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="remember">
+                            <label class="form-check-label" for="remember">
+                                Remember me
+                            </label>
+                        </div>
+
+                        <button type="submit" class="btn btn-gradient w-100 mb-3">Login</button>
+
+                        <div class="text-center">
+                            <p class="mb-0">Don't have an account? <a href="{{ url_for('auth.register') }}"
+                                    class="text-decoration-none" style="color: var(--accent);">Sign Up</a></p>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

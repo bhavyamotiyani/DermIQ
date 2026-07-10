@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block title %}About Us | DermIQ{% endblock %}
+{% block content %}
+<div class="container py-3 mt-4">
+    <!-- Hero Header -->
+    <div class="row mb-5">
+        <div class="col-lg-8 offset-lg-2 text-center">
+
+            <h1 class="display-3 fw-bold mb-4">Precision Skincare, <br><span class="text-primary">Powered by Science.</span></h1>
+            <p class="lead text-muted mx-auto" style="max-width: 700px;">
+                DermIQ is more than just a store — it's a scientific platform designed to decode the complexities of skincare and deliver personalized results that actually work.
+            </p>
+        </div>
+    </div>
+
+    <!-- Mission & Vision -->
+    <div class="row g-4 mb-5">
+        <div class="col-md-6">
+            <div class="card glass-card border-0 shadow-sm rounded-4 p-5 h-100">
+                <div class="bg-primary bg-opacity-10 text-primary rounded-pill p-2 px-3 d-inline-block mb-4" style="width: fit-content;">
+                    <i class="bi bi-bullseye"></i>
+                </div>
+                <h3 class="fw-bold mb-3">Our Mission</h3>
+                <p class="text-muted pe-4">
+                    Our mission is to eliminate the guesswork from skincare. By merging advanced ingredient analysis with individual skin profiles, we provide a data-driven path to healthy, glowing skin for everyone.
+                </p>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card glass-card border-0 shadow-sm rounded-4 p-5 h-100">
+                <div class="bg-success bg-opacity-10 text-success rounded-pill p-2 px-3 d-inline-block mb-4" style="width: fit-content;">
+                    <i class="bi bi-eye"></i>
+                </div>
+                <h3 class="fw-bold mb-3">Our Vision</h3>
+                <p class="text-muted pe-4">
+                    We envision a future where skincare isn't about trial and error. We want to be the world's most trusted intelligence layer between consumers and the products they put on their bodies.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- The DermIQ Method -->
+    <div class="row py-5 align-items-center">
+        <div class="col-lg-6 mb-4 mb-lg-0">
+            <div class="pe-lg-5">
+                <h2 class="fw-bold mb-4">The DermIQ Method</h2>
+                <div class="d-flex mb-4">
+                    <div class="flex-shrink-0">
+                        <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">1</div>
+                    </div>
+                    <div class="ms-3">
+                        <h5 class="fw-bold mb-1">Biological Mapping</h5>
+                        <p class="text-muted small">We analyze your skin's unique characteristics, from moisture levels to sensitivity triggers.</p>
+                    </div>
+                </div>
+                <div class="d-flex mb-4">
+                    <div class="flex-shrink-0">
+                        <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">2</div>
+                    </div>
+                    <div class="ms-3">
+                        <h5 class="fw-bold mb-1">Ingredient Bio-Screening</h5>
+                        <p class="text-muted small">Every product in our catalog is screened for potential irritants and synergistic ingredient pairings.</p>
+                    </div>
+                </div>
+                <div class="d-flex">
+                    <div class="flex-shrink-0">
+                        <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">3</div>
+                    </div>
+                    <div class="ms-3">
+                        <h5 class="fw-bold mb-1">Curated Matching</h5>
+                        <p class="text-muted small">Our algorithm selects only the products that mathematically fit your skin goals and budget.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="card glass-card border-0 shadow-lg rounded-4 p-5 text-center">
+                <div class="display-1 text-primary mb-4"><i class="bi bi-clipboard2-pulse"></i></div>
+                <h4 class="fw-bold">Ready to see the difference?</h4>
+                <p class="text-muted mb-4 px-4">Stop guessing and start glowing. Join the thousands who have decoded their skin intelligence with DermIQ.</p>
+                <a href="{{ url_for('user.index') }}" class="btn btn-primary btn-gradient rounded-pill px-5 py-3 fw-bold">Try the Analysis Now</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,1036 @@
+{% extends "base.html" %}
+{% block title %}My Skin Intelligence | DermIQ{% endblock %}
+{% block content %}
+<style>
+    body {
+        background-color: #fdfdfe;
+    }
+
+    .dashboard-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        min-height: 80vh;
+    }
+
+    .glass-card {
+        background: rgba(255, 255, 255, 1);
+        border: 1px solid rgba(0, 0, 0, 0.05);
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.07), 0 1px 4px rgba(0, 0, 0, 0.04);
+    }
+
+    .hover-lift {
+        transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+    }
+
+    .hover-lift:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1) !important;
+    }
+
+    /* Clinical Stepper — Vertical sidebar */
+    .routine-stepper {
+        display: flex;
+        flex-direction: column;
+        position: relative;
+        padding: 0;
+    }
+
+    .routine-stepper::before {
+        content: '';
+        position: absolute;
+        top: 22px;
+        bottom: 22px;
+        left: 21px;
+        width: 1px;
+        background: #e9ecef;
+        z-index: 0;
+    }
+
+    .step-item {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        align-items: center;
+        padding: 10px 0;
+        text-decoration: none;
+        cursor: pointer;
+    }
+
+    .step-icon {
+        width: 44px;
+        height: 44px;
+        background: white;
+        border: 1.5px solid #eee;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        transition: all 0.3s;
+        color: #adb5bd;
+        font-size: 1rem;
+    }
+
+    .step-item.active .step-icon {
+        border-color: var(--bs-primary);
+        color: white;
+        background: var(--bs-primary);
+        box-shadow: 0 4px 12px rgba(13, 110, 253, 0.25);
+    }
+
+    .step-text {
+        margin-left: 14px;
+    }
+
+    .step-title {
+        font-size: 0.72rem;
+        font-weight: 800;
+        display: block;
+        color: #555;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        transition: color 0.2s;
+    }
+
+    .step-desc {
+        font-size: 0.62rem;
+        color: #aaa;
+        display: block;
+        font-weight: 500;
+    }
+
+    .step-item.active .step-title {
+        color: var(--bs-primary);
+    }
+
+    .compact-form label {
+        font-size: 0.72rem;
+        color: #aaa;
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+
+    .x-small {
+        font-size: 0.7rem;
+    }
+
+    .letter-spacing-1 {
+        letter-spacing: 1.2px;
+    }
+
+    .section-divider {
+        height: 1px;
+        background: #f0f0f0;
+        margin: 2.5rem 0;
+    }
+
+    /* Status Badge */
+    .status-indicator {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 6px;
+    }
+
+    .status-active {
+        background: #2ecc71;
+        box-shadow: 0 0 8px rgba(46, 204, 113, 0.4);
+    }
+
+    /* Animation Handlers */
+    #full-routine-section {
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.6s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease-in-out;
+        opacity: 0;
+        visibility: hidden;
+    }
+
+    #full-routine-section.expanded {
+        max-height: 4000px;
+        opacity: 1;
+        visibility: visible;
+        margin-top: 2rem;
+    }
+
+    .step-group {
+        transition: transform 0.5s ease-out, opacity 0.5s ease-out;
+        transform: translateY(15px);
+        opacity: 0;
+    }
+
+    #full-routine-section.expanded .step-group {
+        transform: translateY(0);
+        opacity: 1;
+    }
+
+    .step-badge {
+        width: 32px;
+        height: 32px;
+        font-size: 0.8rem;
+        background: var(--bs-primary);
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        font-weight: 700;
+    }
+</style>
+
+<div class="container py-3 mt-4 dashboard-container">
+    <div class="row g-4">
+        <!-- Left Column: Clinical Bio-Hub (col-lg-4) -->
+        <div class="col-lg-4">
+            <div class="card glass-card border-0 rounded-4 overflow-hidden mb-4">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center mb-4 pb-3 border-bottom border-light">
+                        <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center me-3"
+                            style="width: 50px; height: 50px; font-size: 1.2rem; font-weight: 700; flex-shrink: 0;">
+                            {{ current_user.name[0]|upper }}
+                        </div>
+                        <div class="overflow-hidden">
+                            <h5 class="fw-bold mb-0 text-dark text-truncate">{{ current_user.name }}</h5>
+                            <span class="text-muted x-small d-block text-truncate opacity-75">{{ current_user.email
+                                }}</span>
+                        </div>
+                    </div>
+
+                    <form id="preferences-form" method="POST" action="{{ url_for('user.profile') }}"
+                        class="compact-form">
+                        <div class="mb-3">
+                            <label>Full Name</label>
+                            <input type="text" name="name" class="form-control form-control-sm border-0 bg-light px-3"
+                                value="{{ current_user.name }}" required style="height: 44px; font-size: 0.85rem;">
+                        </div>
+                        <div class="mb-3">
+                            <label>Biological Skin Type</label>
+                            <select name="skin_type" class="form-select form-select-sm border-0 bg-light px-3"
+                                style="height: 44px; font-size: 0.85rem;">
+                                {% for st in ['Oily', 'Dry', 'Combination', 'Normal', 'Sensitive'] %}
+                                <option value="{{ st }}" {% if current_user.skin_type|title==st %}selected{% endif %}>{{
+                                    st }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label>Max Regimen Budget (₹)</label>
+                            <input type="number" name="budget" class="form-control form-control-sm border-0 bg-light px-3"
+                                value="{{ current_user.budget|int }}" required min="0" style="height: 44px; font-size: 0.85rem;">
+                        </div>
+                        <div class="mb-3">
+                            <label>Sensitivity Level</label>
+                            <select name="sensitivity" class="form-select form-select-sm border-0 bg-light px-3"
+                                style="height: 44px; font-size: 0.85rem;">
+                                {% for level in ['Strong', 'Mild', 'Sensitive'] %}
+                                <option value="{{ level|lower }}" {% if current_user.sensitivity|lower==level|lower %}selected{% endif %}>{{
+                                    level }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-4">
+                            <label>Primary Concerns</label>
+                            <div class="row g-2">
+                                {% set user_concerns = current_user.get_concerns() %}
+                                {% for concern in ['Acne', 'Aging', 'Dryness', 'Redness', 'Dark Spots', 'Pores'] %}
+                                <div class="col-6">
+                                    <div class="form-check custom-checkbox">
+                                        <input class="form-check-input" type="checkbox" name="concerns"
+                                            value="{{ concern }}" id="c-{{ loop.index }}" {% if concern in user_concerns
+                                            %}checked{% endif %}>
+                                        <label class="form-check-label x-small text-muted" for="c-{{ loop.index }}">{{
+                                            concern }}</label>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-sm w-100 rounded-pill fw-bold shadow-sm d-flex align-items-center justify-content-center"
+                            style="height: 44px;">Update Personalized Profile</button>
+                    </form>
+
+                    <div class="mt-4 pt-4 border-top border-light">
+                        <h6 class="fw-bold x-small text-muted text-uppercase mb-3 letter-spacing-1">Diagnostic HUD</h6>
+                        {% set quiz = current_user.get_quiz_results() %}
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted small">Regimen Status:</span>
+                            <span class="small fw-bold text-success"><span
+                                    class="status-indicator status-active"></span>Active</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-3">
+                            <span class="text-muted small">Next Analysis:</span>
+                            <span class="small fw-bold">30 Apr 2026</span>
+                        </div>
+                        <a href="{{ url_for('user.analysis') }}"
+                            class="btn btn-outline-primary btn-sm w-100 rounded-pill fw-bold mt-2 d-flex align-items-center justify-content-center"
+                            style="height: 44px;">Retake Skin Analysis</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Routine Stepper: Vertical, Left Sidebar -->
+            <div class="card glass-card border-0 rounded-4 mt-3">
+                <div class="card-body p-4">
+                    <h6 class="fw-bold x-small text-muted text-uppercase mb-3 letter-spacing-1">🌞 Morning Routine</h6>
+                    <div class="routine-stepper mb-4">
+                        {% for step in routine.morning %}
+                        <a href="javascript:void(0)" class="step-item {% if loop.first %}active{% endif %}"
+                            data-category="morning-{{ step.category|replace(' ', '_') }}">
+                            <div class="step-icon"><i
+                                    class="bi {% if 'Cleanser' in step.category %}bi-droplet-fill{% elif 'Toner' in step.category %}bi-water{% elif 'Serum' in step.category %}bi-magic{% elif 'Sunscreen' in step.category %}bi-sun{% else %}bi-shield-check{% endif %}"></i>
+                            </div>
+                            <div class="step-text">
+                                <span class="step-title">{{ step.step }}. {{ step.category }}</span>
+                                <span class="step-desc text-muted" style="font-size: 0.65rem; line-height: 1.2; display: block;">{{ step.purpose }}</span>
+                            </div>
+                        </a>
+                        {% endfor %}
+                    </div>
+
+                    <h6 class="fw-bold x-small text-muted text-uppercase mb-3 letter-spacing-1">🌙 Night Routine</h6>
+                    <div class="routine-stepper">
+                        {% for step in routine.night %}
+                        <a href="javascript:void(0)" class="step-item"
+                            data-category="night-{{ step.category|replace(' ', '_') }}">
+                            <div class="step-icon"><i
+                                    class="bi {% if 'Cleanser' in step.category %}bi-droplet-fill{% elif 'Toner' in step.category %}bi-water{% elif 'Serum' in step.category %}bi-magic{% elif 'Sunscreen' in step.category %}bi-sun{% else %}bi-shield-check{% endif %}"></i>
+                            </div>
+                            <div class="step-text">
+                                <span class="step-title">{{ step.step }}. {{ step.category }}</span>
+                                <span class="step-desc text-muted" style="font-size: 0.65rem; line-height: 1.2; display: block;">{{ step.purpose }}</span>
+                            </div>
+                        </a>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column: Regimen Dashboard (col-lg-8) -->
+        <div class="col-lg-8">
+
+            <!-- Dermatologist Consultation Card -->
+            <div class="card glass-card border-0 rounded-4 mb-4 shadow-sm overflow-hidden"
+                style="background: white; border-top: 4px solid #007bff!important;">
+                <div class="card-body p-4 p-md-5">
+                    <div class="d-flex justify-content-between align-items-start mb-4">
+                        <div>
+                            <span
+                                class="badge bg-primary bg-opacity-10 text-primary rounded-pill px-3 py-1 x-small mb-3 fw-bold border border-primary border-opacity-10 text-uppercase letter-spacing-1">Expert
+                                Recommendation</span>
+                            <h3 class="fw-bold text-dark mb-1">Dermatologist Advice</h3>
+                            <p class="text-muted small mb-0">Diagnostic-led protocols based on your clinical skin
+                                profile.</p>
+                        </div>
+                        <div class="p-3 bg-light rounded-circle"><i
+                                class="bi bi-shield-check fs-2 text-primary opacity-50"></i></div>
+                    </div>
+
+                    <div class="row g-4 mb-5">
+                        <div class="col-md-4">
+                            <div class="p-3 rounded-4 bg-light bg-opacity-50 border border-light text-center h-100">
+                                <span
+                                    class="text-muted x-small d-block mb-1 text-uppercase fw-bold letter-spacing-1">Skin
+                                    Type</span>
+                                <span class="fw-bold text-dark">{{ current_user.skin_type|title }}</span>
+                            </div>
+                        </div>
+                        <div class="col-md-5">
+                            <div class="p-3 rounded-4 bg-light bg-opacity-50 border border-light text-center h-100">
+                                <span
+                                    class="text-muted x-small d-block mb-1 text-uppercase fw-bold letter-spacing-1">Top
+                                    Focus</span>
+                                <span class="fw-bold text-dark">
+                                    {% set user_concerns = current_user.get_concerns() %}
+                                    {% if user_concerns %}
+                                    {{ user_concerns[:2]|join(' & ')|title }}
+                                    {% else %}
+                                    General Health
+                                    {% endif %}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="p-3 rounded-4 bg-light bg-opacity-50 border border-light text-center h-100">
+                                <span
+                                    class="text-muted x-small d-block mb-1 text-uppercase fw-bold letter-spacing-1">Sensitivity</span>
+                                <span class="fw-bold text-dark">{{ current_user.get_quiz_results().sensitivity|title if
+                                    (current_user.get_quiz_results() and current_user.get_quiz_results().sensitivity)
+                                    else 'Mild' }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="alert bg-primary bg-opacity-10 border-0 rounded-4 p-4 mb-5">
+                        <div class="d-flex">
+                            <i class="bi bi-pencil-square text-primary me-3 fs-5"></i>
+                            <div>
+                                <h6 class="fw-bold text-primary mb-1">Clinical Protocol: {{ advice.protocol }}</h6>
+                                <p class="text-muted small mb-0 lh-base">
+                                    Your regimen is optimized for <strong>{{ advice.protocol }}</strong>. Use
+                                    specialized complexes to target deep-seated markers while ensuring the
+                                    moisture barrier remains resilient. Gel-based formulations are recommended for Oily
+                                    profiles.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row g-4 pt-2">
+                        <div class="col-md-6 border-end border-light">
+                            <h6 class="fw-bold text-success mb-3 x-small text-uppercase letter-spacing-2"><i
+                                    class="bi bi-check-circle-fill me-2"></i>Key Ingredients (Use)</h6>
+                            <ul class="list-unstyled ps-0 mb-0">
+                                {% for ing in advice.to_use %}
+                                <li class="mb-2 d-flex align-items-center small text-muted">
+                                    <i class="bi bi-check2 text-success me-3 fw-bold"></i>
+                                    {{ ing }}
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="fw-bold text-danger mb-3 x-small text-uppercase letter-spacing-2"><i
+                                    class="bi bi-x-circle-fill me-2"></i>Contraindications (Avoid)</h6>
+                            <ul class="list-unstyled ps-0 mb-0">
+                                {% for ing in advice.to_avoid %}
+                                <li class="mb-2 d-flex align-items-center small text-muted">
+                                    <i class="bi bi-x-lg text-danger me-3 fw-bold x-small"></i>
+                                    {{ ing }}
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+            <!-- Expert Picks -->
+            <div class="px-0 mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h6 class="fw-bold text-muted x-small text-uppercase letter-spacing-2 mb-0" id="feed-title">Expert
+                        Picks: Cleanser</h6>
+                    <span class="badge bg-primary bg-opacity-10 text-primary x-small rounded-pill px-3 py-1 fw-bold"><i
+                            class="bi bi-stars me-1"></i>Optimized Match</span>
+                </div>
+
+                <div id="dynamic-recommendations-row">
+                    <!-- Morning Routine Groups -->
+                    {% for step in routine.morning %}
+                    <div class="row g-4 recommendations-group {% if not loop.first %}d-none{% endif %}"
+                        id="group-morning-{{ step.category|replace(' ', '_') }}">
+                        {% if step.products %}
+                        {% for product in step.products %}
+                        <div class="col-md-6 col-lg-4">
+                            <div class="card h-100 {% if loop.first %}border border-primary{% else %}border-0{% endif %} shadow-sm rounded-4 hover-lift bg-white overflow-hidden">
+                                <div class="card-body p-4 d-flex flex-column">
+                                    <div class="d-flex mb-4">
+                                        <div class="rounded-4 me-3 p-3 bg-light bg-opacity-75 position-relative"
+                                            style="width: 80px; height: 80px; flex-shrink: 0;">
+                                            <img src="{{ product.image_url }}" class="img-fluid h-100"
+                                                style="object-fit: contain;">
+                                            <div class="position-absolute top-0 start-0 m-1">
+                                                {% if loop.first %}
+                                                <span class="badge bg-primary text-white p-1"
+                                                    style="font-size: 0.4rem; border-radius: 3px;">RECOMMENDED</span>
+                                                {% else %}
+                                                <span class="badge bg-secondary text-white p-1"
+                                                    style="font-size: 0.4rem; border-radius: 3px;">ALTERNATIVE</span>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        <div class="flex-grow-1 overflow-hidden">
+                                            <span class="text-primary x-small fw-bold letter-spacing-1 d-block mb-1">{{
+                                                product.brand|upper }}</span>
+                                            <h6 class="fw-bold mb-0 small lh-sm">{{ product.name|truncate(35) }}</h6>
+                                            <div class="mt-2 d-flex align-items-center">
+                                                <span class="fw-bold x-small text-dark"><i
+                                                        class="bi bi-star-fill text-warning me-1"></i>{{ product.rating
+                                                    }}</span>
+                                                {% if product.compatibility_score is defined %}
+                                                <span class="badge bg-success bg-opacity-10 text-success ms-2 x-small border border-success border-opacity-10 fw-bold">
+                                                    Match: {{ product.compatibility_score }}%
+                                                </span>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Clinical Rationale -->
+                                    <div class="p-3 bg-light bg-opacity-75 rounded-3 mb-4 mt-2"
+                                        style="border-left: 2px solid #007bff;">
+                                        <div class="text-primary fw-bold text-uppercase x-small letter-spacing-1 mb-1"
+                                            style="font-size: 0.6rem;">Expert Why?</div>
+                                        <p class="text-muted small mb-0 lh-sm" style="font-size: 0.72rem;">
+                                            Contains <strong>{{ product.concerns.split(',')[0] if product.concerns else
+                                                'pure clinical active' }}</strong> optimized for
+                                            {{ user.skin_type }} skin with focused target on {{
+                                            user.get_concerns()|first if user.get_concerns() else 'daily health' }}.
+                                        </p>
+                                    </div>
+
+                                    <div class="d-flex justify-content-between align-items-center mt-auto">
+                                        <span class="fw-bold text-dark small">₹{{ product.price }}</span>
+                                        <form action="{{ url_for('user.add_to_cart', product_id=product.id) }}"
+                                            method="POST" class="m-0">
+                                            <button type="submit"
+                                                class="btn btn-primary btn-sm x-small rounded-pill px-3 shadow-sm fw-bold"><i
+                                                    class="bi bi-cart-plus me-1"></i> Add to Cart</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                        {% else %}
+                        <div class="col-12 text-center py-4">
+                            <p class="text-muted small mb-0">No matching items currently found for this phase.</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+
+                    <!-- Night Routine Groups -->
+                    {% for step in routine.night %}
+                    <div class="row g-4 recommendations-group d-none"
+                        id="group-night-{{ step.category|replace(' ', '_') }}">
+                        {% if step.products %}
+                        {% for product in step.products %}
+                        <div class="col-md-6 col-lg-4">
+                            <div class="card h-100 {% if loop.first %}border border-primary{% else %}border-0{% endif %} shadow-sm rounded-4 hover-lift bg-white overflow-hidden">
+                                <div class="card-body p-4 d-flex flex-column">
+                                    <div class="d-flex mb-4">
+                                        <div class="rounded-4 me-3 p-3 bg-light bg-opacity-75 position-relative"
+                                            style="width: 80px; height: 80px; flex-shrink: 0;">
+                                            <img src="{{ product.image_url }}" class="img-fluid h-100"
+                                                style="object-fit: contain;">
+                                            <div class="position-absolute top-0 start-0 m-1">
+                                                {% if loop.first %}
+                                                <span class="badge bg-primary text-white p-1"
+                                                    style="font-size: 0.4rem; border-radius: 3px;">RECOMMENDED</span>
+                                                {% else %}
+                                                <span class="badge bg-secondary text-white p-1"
+                                                    style="font-size: 0.4rem; border-radius: 3px;">ALTERNATIVE</span>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        <div class="flex-grow-1 overflow-hidden">
+                                            <span class="text-primary x-small fw-bold letter-spacing-1 d-block mb-1">{{
+                                                product.brand|upper }}</span>
+                                            <h6 class="fw-bold mb-0 small lh-sm">{{ product.name|truncate(35) }}</h6>
+                                            <div class="mt-2 d-flex align-items-center">
+                                                <span class="fw-bold x-small text-dark"><i
+                                                        class="bi bi-star-fill text-warning me-1"></i>{{ product.rating
+                                                    }}</span>
+                                                {% if product.compatibility_score is defined %}
+                                                <span class="badge bg-success bg-opacity-10 text-success ms-2 x-small border border-success border-opacity-10 fw-bold">
+                                                    Match: {{ product.compatibility_score }}%
+                                                </span>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Clinical Rationale -->
+                                    <div class="p-3 bg-light bg-opacity-75 rounded-3 mb-4 mt-2"
+                                        style="border-left: 2px solid #007bff;">
+                                        <div class="text-primary fw-bold text-uppercase x-small letter-spacing-1 mb-1"
+                                            style="font-size: 0.6rem;">Expert Why?</div>
+                                        <p class="text-muted small mb-0 lh-sm" style="font-size: 0.72rem;">
+                                            Contains <strong>{{ product.concerns.split(',')[0] if product.concerns else
+                                                'pure clinical active' }}</strong> optimized for
+                                            {{ user.skin_type }} skin with focused target on {{
+                                            user.get_concerns()|first if user.get_concerns() else 'daily health' }}.
+                                        </p>
+                                    </div>
+
+                                    <div class="d-flex justify-content-between align-items-center mt-auto">
+                                        <span class="fw-bold text-dark small">₹{{ product.price }}</span>
+                                        <form action="{{ url_for('user.add_to_cart', product_id=product.id) }}"
+                                            method="POST" class="m-0">
+                                            <button type="submit"
+                                                class="btn btn-primary btn-sm x-small rounded-pill px-3 shadow-sm fw-bold"><i
+                                                    class="bi bi-cart-plus me-1"></i> Add to Cart</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                        {% else %}
+                        <div class="col-12 text-center py-4">
+                            <p class="text-muted small mb-0">No matching items currently found for this phase.</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+
+
+            <div class="text-center mt-4">
+                <button class="btn btn-outline-primary btn-sm rounded-pill px-5 fw-bold shadow-sm"
+                    id="btn-toggle-routine" style="transition: all 0.3s;">
+                    View Full Routine <i class="bi bi-chevron-down ms-2 position-relative" style="top: 1px;"></i>
+                </button>
+            </div>
+
+            <!-- Initially Hidden Full Routine Section -->
+            <div id="full-routine-section">
+                <div class="section-divider mt-0 mb-5"></div>
+                
+                <h4 class="fw-bold text-dark mb-4 text-center letter-spacing-1">🌞 Morning Routine Regimen</h4>
+                <div class="row g-5 mb-5">
+                    {% for step in routine.morning %}
+                    <div class="col-12 step-group" style="transition-delay: {{ loop.index0 * 0.15 }}s;">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="step-badge me-3 shadow-sm border border-primary border-opacity-25">{{ step.step }}</div>
+                            <h5 class="fw-bold text-dark mb-0 letter-spacing-1">{{ step.category }}</h5>
+                            <span class="text-muted ms-3 small font-italic">— {{ step.purpose }}</span>
+                            <div class="flex-grow-1 ms-4 border-bottom border-light opacity-50"></div>
+                        </div>
+                        <div class="row g-4">
+                            {% for product in step.products %}
+                            <div class="col-md-6 col-lg-4">
+                                <div class="card h-100 {% if loop.first %}border border-primary{% else %}border-0{% endif %} shadow-sm rounded-4 hover-lift bg-white overflow-hidden">
+                                    <div class="p-4 text-center bg-light bg-opacity-25 position-relative"
+                                        style="height: 180px;">
+                                        <a href="{{ url_for('user.product_detail', product_id=product.id) }}"
+                                            class="d-block h-100">
+                                            <img src="{{ product.image_url }}" class="img-fluid h-100"
+                                                style="object-fit: contain; filter: drop-shadow(0 5px 15px rgba(0,0,0,0.06));">
+                                        </a>
+                                        <span
+                                            class="position-absolute top-0 end-0 m-3 badge rounded-pill bg-warning bg-opacity-25 text-warning-emphasis border border-warning border-opacity-25 x-small fw-bold px-2 py-1"><i
+                                                class="bi bi-star-fill me-1"></i>{{ product.rating }}</span>
+                                        {% if loop.first %}
+                                        <span
+                                            class="position-absolute top-0 start-0 m-3 badge rounded-pill bg-primary text-white x-small fw-bold px-2 py-1">
+                                            RECOMMENDED
+                                        </span>
+                                        {% elif product.compatibility_score is defined %}
+                                        <span
+                                            class="position-absolute top-0 start-0 m-3 badge rounded-pill bg-success bg-opacity-25 text-success-emphasis border border-success border-opacity-25 x-small fw-bold px-2 py-1">
+                                            Match: {{ product.compatibility_score }}%
+                                        </span>
+                                        {% endif %}
+                                    </div>
+                                    <div class="card-body p-4 d-flex flex-column">
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span class="text-primary x-small fw-bold letter-spacing-1 opacity-75">{{
+                                                product.brand|upper }}</span>
+                                            <span class="text-success small fw-bold">₹{{ product.price }}</span>
+                                        </div>
+                                        <h6 class="fw-bold mb-3 small lh-base">
+                                            <a href="{{ url_for('user.product_detail', product_id=product.id) }}"
+                                                class="text-dark text-decoration-none stretched-link">{{ product.name
+                                                }}</a>
+                                        </h6>
+                                        <div class="mb-4">
+                                            <span
+                                                class="badge rounded-pill bg-primary bg-opacity-10 text-primary x-small px-3 py-1 border border-primary border-opacity-10 fw-bold">Best
+                                                for {{ current_user.skin_type }}</span>
+                                        </div>
+                                        <div class="d-flex gap-2 position-relative mt-auto" style="z-index: 2;">
+                                            <a href="{{ url_for('user.product_detail', product_id=product.id) }}"
+                                                class="btn btn-outline-primary btn-sm flex-grow-1 x-small fw-bold py-2 rounded-pill">View
+                                                Detail</a>
+                                            <form action="{{ url_for('user.add_to_cart', product_id=product.id) }}"
+                                                method="POST" class="flex-grow-1 m-0">
+                                                <button type="submit"
+                                                    class="btn btn-primary btn-sm w-100 x-small fw-bold py-2 rounded-pill shadow-sm"><i
+                                                        class="bi bi-cart-plus me-1"></i> Add to Cart</button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <div class="section-divider mt-4 mb-5"></div>
+
+                <h4 class="fw-bold text-dark mb-4 text-center letter-spacing-1">🌙 Night Routine Regimen</h4>
+                <div class="row g-5">
+                    {% for step in routine.night %}
+                    <div class="col-12 step-group" style="transition-delay: {{ (loop.index0 + 4) * 0.15 }}s;">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="step-badge me-3 shadow-sm border border-primary border-opacity-25">{{ step.step }}</div>
+                            <h5 class="fw-bold text-dark mb-0 letter-spacing-1">{{ step.category }}</h5>
+                            <span class="text-muted ms-3 small font-italic">— {{ step.purpose }}</span>
+                            <div class="flex-grow-1 ms-4 border-bottom border-light opacity-50"></div>
+                        </div>
+                        <div class="row g-4">
+                            {% for product in step.products %}
+                            <div class="col-md-6 col-lg-4">
+                                <div class="card h-100 {% if loop.first %}border border-primary{% else %}border-0{% endif %} shadow-sm rounded-4 hover-lift bg-white overflow-hidden">
+                                    <div class="p-4 text-center bg-light bg-opacity-25 position-relative"
+                                        style="height: 180px;">
+                                        <a href="{{ url_for('user.product_detail', product_id=product.id) }}"
+                                            class="d-block h-100">
+                                            <img src="{{ product.image_url }}" class="img-fluid h-100"
+                                                style="object-fit: contain; filter: drop-shadow(0 5px 15px rgba(0,0,0,0.06));">
+                                        </a>
+                                        <span
+                                            class="position-absolute top-0 end-0 m-3 badge rounded-pill bg-warning bg-opacity-25 text-warning-emphasis border border-warning border-opacity-25 x-small fw-bold px-2 py-1"><i
+                                                class="bi bi-star-fill me-1"></i>{{ product.rating }}</span>
+                                        {% if loop.first %}
+                                        <span
+                                            class="position-absolute top-0 start-0 m-3 badge rounded-pill bg-primary text-white x-small fw-bold px-2 py-1">
+                                            RECOMMENDED
+                                        </span>
+                                        {% elif product.compatibility_score is defined %}
+                                        <span
+                                            class="position-absolute top-0 start-0 m-3 badge rounded-pill bg-success bg-opacity-25 text-success-emphasis border border-success border-opacity-25 x-small fw-bold px-2 py-1">
+                                            Match: {{ product.compatibility_score }}%
+                                        </span>
+                                        {% endif %}
+                                    </div>
+                                    <div class="card-body p-4 d-flex flex-column">
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span class="text-primary x-small fw-bold letter-spacing-1 opacity-75">{{
+                                                product.brand|upper }}</span>
+                                            <span class="text-success small fw-bold">₹{{ product.price }}</span>
+                                        </div>
+                                        <h6 class="fw-bold mb-3 small lh-base">
+                                            <a href="{{ url_for('user.product_detail', product_id=product.id) }}"
+                                                class="text-dark text-decoration-none stretched-link">{{ product.name
+                                                }}</a>
+                                        </h6>
+                                        <div class="mb-4">
+                                            <span
+                                                class="badge rounded-pill bg-primary bg-opacity-10 text-primary x-small px-3 py-1 border border-primary border-opacity-10 fw-bold">Best
+                                                for {{ current_user.skin_type }}</span>
+                                        </div>
+                                        <div class="d-flex gap-2 position-relative mt-auto" style="z-index: 2;">
+                                            <a href="{{ url_for('user.product_detail', product_id=product.id) }}"
+                                                class="btn btn-outline-primary btn-sm flex-grow-1 x-small fw-bold py-2 rounded-pill">View
+                                                Detail</a>
+                                            <form action="{{ url_for('user.add_to_cart', product_id=product.id) }}"
+                                                method="POST" class="flex-grow-1 m-0">
+                                                <button type="submit"
+                                                    class="btn btn-primary btn-sm w-100 x-small fw-bold py-2 rounded-pill shadow-sm"><i
+                                                        class="bi bi-cart-plus me-1"></i> Add to Cart</button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        </div>
+    </div>
+</div>
+
+<!-- Order History: Bottom Section -->
+<div class="section-divider"></div>
+<div class="card glass-card border-0 rounded-4 overflow-hidden mb-5" style="background: white;">
+    <div class="card-body p-4 p-md-5">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h5 class="fw-bold mb-1 text-dark">Order History</h5>
+                <p class="text-muted small mb-0">Track your skin regimen transactions and reorder essentials.</p>
+            </div>
+            <i class="bi bi-clock-history fs-4 text-muted opacity-25"></i>
+        </div>
+
+        {% if transactions %}
+        <div class="table-responsive">
+            <table class="table table-hover align-middle border-0 mb-0">
+                <thead class="bg-light bg-opacity-50">
+                    <tr>
+                        <th class="border-0 px-4 py-3 x-small fw-bold text-muted text-uppercase letter-spacing-1">Order
+                            Date</th>
+                        <th class="border-0 px-4 py-3 x-small fw-bold text-muted text-uppercase letter-spacing-1">
+                            Product Details</th>
+                        <th
+                            class="border-0 px-4 py-3 x-small fw-bold text-muted text-uppercase letter-spacing-1 text-center">
+                            Amount</th>
+                        <th
+                            class="border-0 px-4 py-3 x-small fw-bold text-muted text-uppercase letter-spacing-1 text-center">
+                            Status</th>
+                        <th
+                            class="border-0 px-4 py-3 x-small fw-bold text-muted text-uppercase letter-spacing-1 text-end">
+                            Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for t in transactions %}
+                    <tr class="border-0 bg-white hover-lift"
+                        style="box-shadow: 0 4px 12px rgba(0,0,0,0.03); border-radius: 12px; display: table-row; transform: scale(1);">
+                        <td class="border-0 px-4 py-4 align-middle x-small fw-bold text-muted">{{ t.date.strftime('%d %b
+                            %Y') }}</td>
+                        <td class="border-0 px-4 py-4 align-middle">
+                            <div class="d-flex align-items-center">
+                                <div class="bg-light rounded-3 me-3 p-2 d-flex align-items-center justify-content-center shadow-sm"
+                                    style="width: 70px; height: 70px; flex-shrink: 0;">
+                                    {% if t.product.image_url %}
+                                    <img src="{{ t.product.image_url }}" alt="{{ t.product.name }}" class="img-fluid"
+                                        style="max-height: 100%; object-fit: contain;">
+                                    {% else %}
+                                    <i class="bi bi-box-seam text-secondary fs-4"></i>
+                                    {% endif %}
+                                </div>
+                                <div>
+                                    <div class="x-small text-uppercase text-secondary fw-bold letter-spacing-1 mb-1"
+                                        style="font-size: 0.65rem;">{{ t.product.brand }}</div>
+                                    <div class="small fw-bold text-dark mb-1 line-clamp-1 pb-1">{{ t.product.name }}
+                                        {% if t.order_count and t.order_count > 1 %}
+                                        <span class="text-primary ms-1" style="font-size: 0.75rem;">({{ t.order_count }} orders)</span>
+                                        {% endif %}
+                                    </div>
+                                    <div class="x-small text-muted mb-1">{{ t.product.category }} &bull; {{
+                                        t.product.skin_type }} Skin</div>
+                                    <div class="text-secondary opacity-75" style="font-size: 0.65rem;">Order ID: #ORD-{{
+                                        t.id }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="border-0 px-4 py-4 align-middle text-center">
+                            <span class="fw-bold text-dark small">₹{{ "%.2f"|format(t.amount) }}</span>
+                        </td>
+                        <td class="border-0 px-4 py-4 align-middle text-center">
+                            {% set safe_status = t.status if (t.status is defined and t.status) else 'Completed' %}
+                            {% if safe_status|lower == 'pending' %}
+                            <span
+                                class="badge bg-warning bg-opacity-10 text-warning rounded-pill px-3 py-1 border border-warning border-opacity-10 x-small fw-bold hover-lift" style="transition: all 0.3s; cursor: default; display: inline-block;">Pending</span>
+                            {% elif safe_status|lower == 'cancelled' %}
+                            <span
+                                class="badge bg-danger bg-opacity-10 text-danger rounded-pill px-3 py-1 border border-danger border-opacity-10 x-small fw-bold hover-lift" style="transition: all 0.3s; cursor: default; display: inline-block;">Cancelled</span>
+                            {% else %}
+                            <span
+                                class="badge bg-success bg-opacity-10 text-success rounded-pill px-3 py-1 border border-success border-opacity-10 x-small fw-bold hover-lift" style="transition: all 0.3s; cursor: default; display: inline-block;">Completed</span>
+                            {% endif %}
+                        </td>
+                        <td class="border-0 px-4 py-4 align-middle text-end">
+                            <div class="d-flex justify-content-end align-items-center gap-2">
+                                <a href="{{ url_for('user.product_detail', product_id=t.product_id) }}"
+                                    class="btn btn-outline-secondary btn-sm rounded-pill px-4 py-2 fw-bold x-small shadow-sm hover-lift" style="transition: all 0.3s;">
+                                    View Product
+                                </a>
+                                <a href="{{ url_for('user.buy_again', order_id=t.id) }}"
+                                    class="btn btn-primary btn-sm rounded-pill px-4 py-2 fw-bold x-small shadow-sm hover-lift" style="transition: all 0.3s;">
+                                    <i class="bi bi-cart-plus me-1"></i> Buy Again
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    <!-- Adding a small spacer row for visual separation since tr margins don't always work -->
+                    <tr class="border-0" style="height: 10px; background: transparent;">
+                        <td colspan="5" class="p-0 border-0"></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <div class="bg-light bg-opacity-50 rounded-circle d-inline-flex align-items-center justify-content-center mb-3"
+                style="width: 80px; height: 80px;">
+                <i class="bi bi-cart-x fs-2 text-muted opacity-50"></i>
+            </div>
+            <p class="text-muted small fw-bold mb-1">No orders found</p>
+            <p class="text-muted x-small mb-0 opacity-75">Start your clinical routine by choosing a top pick above.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Address Book Section -->
+<div class="card glass-card border-0 rounded-4 overflow-hidden mb-5" style="background: white;">
+    <div class="card-body p-4 p-md-5">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h5 class="fw-bold mb-1 text-dark">Address Book</h5>
+                <p class="text-muted small mb-0">Manage your shipping destinations for faster checkout.</p>
+            </div>
+            <button type="button" class="btn btn-outline-primary btn-sm rounded-pill px-4 fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#addAddressModal">
+                <i class="bi bi-plus-lg me-1"></i> Add New Address
+            </button>
+        </div>
+
+        {% if current_user.addresses %}
+        <div class="row g-4 text-start">
+            {% for addr in current_user.addresses %}
+            <div class="col-md-6">
+                <div class="card h-100 border-0 shadow-sm rounded-4 p-4 position-relative {% if addr.is_default %}border-start border-primary border-4{% endif %}" style="background: #f8f9fa;">
+                    {% if addr.is_default %}
+                    <span class="badge bg-primary text-white position-absolute top-0 end-0 m-3 px-3 rounded-pill x-small fw-bold">DEFAULT</span>
+                    {% endif %}
+                    <h6 class="fw-bold text-dark mb-2">{{ addr.full_name }}</h6>
+                    <p class="text-muted small mb-1"><i class="bi bi-telephone me-2"></i>{{ addr.phone }}</p>
+                    <p class="text-muted small mb-3 lh-sm">
+                        {{ addr.street_address }}<br>
+                        {{ addr.city }}, {{ addr.state }} - {{ addr.pin_code }}
+                    </p>
+                    <div class="d-flex gap-3 mt-auto pt-3">
+                        {% if not addr.is_default %}
+                        <form action="{{ url_for('user.set_default_address', address_id=addr.id) }}" method="POST" class="m-0">
+                            <button type="submit" class="btn btn-link text-primary text-decoration-none p-0 x-small fw-bold">Set as Default</button>
+                        </form>
+                        {% endif %}
+                        <form action="{{ url_for('user.delete_address', address_id=addr.id) }}" method="POST" class="m-0 ms-{% if addr.is_default %}0{% else %}auto{% endif %}" onsubmit="return confirm('Are you sure you want to remove this address?')">
+                            <button type="submit" class="btn btn-link text-danger text-decoration-none p-0 x-small fw-bold">Remove</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-5 bg-light bg-opacity-50 rounded-4">
+            <i class="bi bi-geo-alt fs-2 text-muted opacity-25 mb-2"></i>
+            <p class="text-muted small mb-0">No saved addresses found. Add one to get started!</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Add Address Modal -->
+<div class="modal fade" id="addAddressModal" tabindex="-1" aria-labelledby="addAddressModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 rounded-4 shadow-lg">
+            <div class="modal-header border-0 pb-0 px-4 pt-4">
+                <h5 class="modal-title fw-bold text-dark" id="addAddressModalLabel">Add New Address</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form action="{{ url_for('user.add_address') }}" method="POST">
+                    <div class="mb-3 text-start">
+                        <label class="form-label x-small fw-bold text-muted text-uppercase letter-spacing-1">Recipient Name</label>
+                        <input type="text" name="full_name" class="form-control rounded-pill border-0 bg-light px-3" placeholder="Enter recipient's name" required style="height: 44px; font-size: 0.85rem;">
+                    </div>
+                    <div class="mb-3 text-start">
+                        <label class="form-label x-small fw-bold text-muted text-uppercase letter-spacing-1">Phone Number</label>
+                        <input type="text" name="phone" class="form-control rounded-pill border-0 bg-light px-3" placeholder="Enter contact number" required style="height: 44px; font-size: 0.85rem;">
+                    </div>
+                    <div class="mb-3 text-start">
+                        <label class="form-label x-small fw-bold text-muted text-uppercase letter-spacing-1">Detailed Address</label>
+                        <textarea name="street_address" class="form-control rounded-4 border-0 bg-light px-3 py-2" rows="2" placeholder="House/Flat No, Apartment, Street" required style="font-size: 0.85rem;"></textarea>
+                    </div>
+                    <div class="row g-3 mb-3 text-start">
+                        <div class="col-6">
+                            <label class="form-label x-small fw-bold text-muted text-uppercase letter-spacing-1">City</label>
+                            <input type="text" name="city" class="form-control rounded-pill border-0 bg-light px-3" required style="height: 44px; font-size: 0.85rem;">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label x-small fw-bold text-muted text-uppercase letter-spacing-1">State</label>
+                            {% set indian_states = [
+                                'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh', 'Goa', 'Gujarat', 
+                                'Haryana', 'Himachal Pradesh', 'Jharkhand', 'Karnataka', 'Kerala', 'Madhya Pradesh', 
+                                'Maharashtra', 'Manipur', 'Meghalaya', 'Mizoram', 'Nagaland', 'Odisha', 'Punjab', 
+                                'Rajasthan', 'Sikkim', 'Tamil Nadu', 'Telangana', 'Tripura', 'Uttar Pradesh', 
+                                'Uttarakhand', 'West Bengal', 'Andaman and Nicobar Islands', 'Chandigarh', 
+                                'Dadra and Nagar Haveli and Daman and Diu', 'Delhi', 'Jammu and Kashmir', 'Ladakh', 
+                                'Lakshadweep', 'Puducherry'
+                            ] %}
+                            <select name="state" class="form-select rounded-pill border-0 bg-light px-3" required style="height: 44px; font-size: 0.85rem;">
+                                <option value="" disabled selected>Select State</option>
+                                {% for st in indian_states %}
+                                <option value="{{ st }}">{{ st }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-4 text-start">
+                        <label class="form-label x-small fw-bold text-muted text-uppercase letter-spacing-1">PIN Code</label>
+                        <input type="text" name="pin_code" class="form-control rounded-pill border-0 bg-light px-3" required style="height: 44px; font-size: 0.85rem;">
+                    </div>
+                    <div class="form-check mb-4 text-start">
+                        <input class="form-check-input" type="checkbox" name="is_default" id="is_default_check">
+                        <label class="form-check-label x-small text-muted" for="is_default_check">Set as default shipping address</label>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100 rounded-pill fw-bold py-3 shadow-sm border-0" style="height: 50px;">Save Destination Address</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const btnToggle = document.getElementById('btn-toggle-routine');
+        const fullSection = document.getElementById('full-routine-section');
+
+        if (btnToggle && fullSection) {
+            btnToggle.addEventListener('click', function () {
+                const isExpanded = fullSection.classList.toggle('expanded');
+
+                if (isExpanded) {
+                    this.innerHTML = 'Collapse Routine <i class="bi bi-chevron-up ms-2 position-relative" style="top: 1px;"></i>';
+                    // Optional: Smooth scroll if the section is very long
+                    setTimeout(() => {
+                        fullSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }, 100);
+                } else {
+                    this.innerHTML = 'View Full Routine <i class="bi bi-chevron-down ms-2 position-relative" style="top: 1px;"></i>';
+                }
+            });
+        }
+
+        // Auto-submit preferences
+        const prefForm = document.getElementById('preferences-form');
+        if (prefForm) {
+            const inputs = prefForm.querySelectorAll('select, input[type="checkbox"], input[type="number"]');
+            inputs.forEach(input => {
+                input.addEventListener('change', function () {
+                    const actionUrl = new URL(prefForm.getAttribute('action'), window.location.origin);
+                    actionUrl.searchParams.set('autosubmit', 'true');
+                    prefForm.action = actionUrl.pathname + actionUrl.search;
+                    prefForm.submit();
+                });
+            });
+        }
+
+        // Stepper Filtering
+        const steps = document.querySelectorAll('.step-item');
+        const groups = document.querySelectorAll('.recommendations-group');
+        const feedTitle = document.getElementById('feed-title');
+
+        if (steps && groups) {
+            steps.forEach(step => {
+                step.addEventListener('click', function () {
+                    const cat = this.dataset.category;
+
+                    // Update Active State
+                    steps.forEach(s => s.classList.remove('active'));
+                    this.classList.add('active');
+
+                    // Filter Feed
+                    groups.forEach(g => {
+                        g.classList.add('d-none');
+                        if (g.id === `group-${cat}`) {
+                            g.classList.remove('d-none');
+                            g.style.opacity = '0';
+                            setTimeout(() => g.style.opacity = '1', 50); // Fade in effect
+                        }
+                    });
+
+                    // Update Title
+                    if (feedTitle) {
+                        let displayName = cat.replace('morning-', 'Morning ').replace('night-', 'Night ').replace(/_/g, ' ');
+                        feedTitle.innerText = `Expert Picks: ${displayName}`;
+                    }
+                });
+            });
+        }
+    });
+</script>
+{% endblock %}

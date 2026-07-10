@@ -1,0 +1,287 @@
+{% extends "base.html" %}
+{% block title %}Process Payment | DermIQ{% endblock %}
+{% block content %}
+<div class="container py-4 mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card glass-card border-0 shadow-lg rounded-4 overflow-hidden">
+                <div class="pt-4 px-4 pb-0 text-white text-center" style="background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);">
+                    {% if method == 'ONLINE' %}
+                        <i class="bi bi-wallet2 fs-1 mb-3"></i>
+                        <h3 class="fw-bold mb-0 text-white">Pay Online</h3>
+                        <p class="mb-0 opacity-75">Pay ₹{{ "{:,.2f}".format(total) }} securely</p>
+                    {% else %}
+                        <i class="bi bi-hand-thumbs-up fs-1 mb-3"></i>
+                        <h3 class="fw-bold mb-0 text-white">Confirm COD</h3>
+                        <p class="mb-0 opacity-75">Pay ₹{{ "{:,.2f}".format(total) }} on Delivery</p>
+                    {% endif %}
+                </div>
+                
+                <div class="card-body pt-4 px-4 p-md-5">
+                    <form action="{{ url_for('user.confirm_order') }}" method="POST">
+                        <input type="hidden" name="method" value="{{ method }}">
+
+                        <!-- Shipping Address Selection -->
+                        <div class="mb-5">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6 class="fw-bold text-dark mb-0"><i class="bi bi-geo-alt me-2 text-primary"></i>Shipping Address</h6>
+                                <a href="{{ url_for('user.profile') }}" class="text-primary x-small fw-bold text-decoration-none">+ Add/Edit</a>
+                            </div>
+                            
+                            {% if current_user.addresses %}
+                                <div class="address-selection-grid">
+                                    {% for addr in current_user.addresses %}
+                                    <div class="address-card mb-2">
+                                        <input type="radio" name="address_id" id="addr-{{ addr.id }}" value="{{ addr.id }}" {% if (session.get('checkout_address_id') and addr.id == session.get('checkout_address_id')) or (not session.get('checkout_address_id') and addr.is_default) %}checked{% endif %} class="btn-check" required>
+                                        <label class="card rounded-4 border-light bg-light p-3 w-100 cursor-pointer hover-lift" for="addr-{{ addr.id }}">
+                                            <div class="d-flex justify-content-between mb-1">
+                                                <span class="fw-bold small">{{ addr.full_name }}</span>
+                                                <span class="text-muted x-small">{{ addr.phone }}</span>
+                                            </div>
+                                            <div class="text-muted x-small line-clamp-1">
+                                                {{ addr.street_address }}, {{ addr.city }}, {{ addr.state }} - {{ addr.pin_code }}
+                                            </div>
+                                        </label>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <div class="alert alert-warning rounded-4 border-0 py-3 mb-0">
+                                    <div class="d-flex align-items-center">
+                                        <i class="bi bi-exclamation-triangle-fill me-3 fs-5"></i>
+                                        <p class="mb-0 small fw-bold">No shipping addresses found.</p>
+                                    </div>
+                                    <a href="{{ url_for('user.profile') }}" class="btn btn-warning btn-sm w-100 rounded-pill fw-bold mt-3">Add Shipping Address First</a>
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        {% if method == 'ONLINE' %}
+                                <div class="col-12 text-center mb-4">
+                                    <div class="bg-light p-4 rounded-4 mb-3 border border-dashed text-primary">
+                                        <div class="d-flex justify-content-center gap-3 mb-3">
+                                            <i class="bi bi-qr-code-scan fs-3"></i>
+                                            <i class="bi bi-credit-card fs-3"></i>
+                                            <i class="bi bi-bank fs-3"></i>
+                                        </div>
+                                        <p class="mb-0 fw-bold text-dark">One-stop Payment Solution</p>
+                                        <p class="small text-muted mb-0">UPI, Cards, and Netbanking supported</p>
+                                    </div>
+                                    
+                                    <div class="card bg-light border-0 rounded-4 p-3 text-start">
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span class="text-muted small">Total Payable:</span>
+                                            <span class="fw-bold">₹{{ "{:,.2f}".format(total) }}</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between">
+                                            <span class="text-muted small">Gateway Fee:</span>
+                                            <span class="text-success fw-bold small">FREE</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                        {% else %}
+                        <div class="text-center mb-4">
+                            <div class="bg-success bg-opacity-10 text-success p-4 rounded-4 mb-3">
+                                <i class="bi bi-truck fs-1 mb-2"></i>
+                                <p class="mb-0 fw-bold">You've chosen Cash on Delivery</p>
+                            </div>
+                            <p class="text-muted">An OTP might be sent to your mobile number at the time of delivery.</p>
+                            
+                            <div class="card bg-light border-0 rounded-4 p-3 text-start mt-4">
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span class="text-muted">Order Total:</span>
+                                    <span class="fw-bold">₹{{ "{:,.2f}".format(total) }}</span>
+                                </div>
+                                <div class="d-flex justify-content-between">
+                                    <span class="text-muted">Delivery Charges:</span>
+                                    <span class="text-success fw-bold">FREE</span>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <div class="d-grid gap-3">
+                            {% if method == 'ONLINE' %}
+                            <button type="button" id="razorpay-btn" class="btn btn-dark btn-lg rounded-pill fw-bold py-3 shadow-sm border-0" style="background: var(--primary);">
+                                <i class="bi bi-wallet2 me-2"></i>Proceed to Secure Payment
+                            </button>
+                            
+                            <!-- Test Mode Instructions Box -->
+                            <div class="test-helper mt-3 p-3 bg-light rounded-4 border">
+                                <div class="d-flex align-items-baseline gap-2 mb-1">
+                                    <i class="bi bi-info-circle-fill text-primary small"></i>
+                                    <h6 class="small fw-bold text-dark mb-0">Developer Test Mode Info</h6>
+                                </div>
+                                <p class="x-small text-muted mb-2">If your test account has "International cards are not supported" enabled:</p>
+                                <div class="bg-white p-2 rounded border text-start mb-2">
+                                    <div class="fw-bold x-small text-dark mb-1">💡 Option A: Netbanking (Recommended)</div>
+                                    <div class="x-small text-muted">Select <strong>Netbanking</strong> in the modal, pick any bank, and click <strong>Success</strong>. No card needed!</div>
+                                </div>
+                                <div class="bg-white p-2 rounded border text-start">
+                                    <div class="fw-bold x-small text-dark mb-1">💳 Option B: Domestic RuPay/Mastercard Test Cards</div>
+                                    <div class="x-small text-muted mb-1">Use a simulated Indian card:</div>
+                                    <code class="fw-bold text-primary" style="font-size:0.75rem;">5081 2500 0000 0001</code> (RuPay)<br>
+                                    <code class="fw-bold text-primary" style="font-size:0.75rem;">5267 3181 8797 5449</code> (Mastercard)<br>
+                                    <div class="x-small text-muted mt-1">Expiry: Future | CVV: 123</div>
+                                </div>
+                            </div>
+                            
+                            {% else %}
+                            <button type="submit" class="btn btn-dark btn-lg rounded-pill fw-bold py-3 shadow-sm border-0" style="background: var(--primary);">
+                                Confirm My Order
+                            </button>
+                            {% endif %}
+                            <a href="{{ url_for('user.payment') }}" class="btn btn-link text-muted text-decoration-none small">
+                                <i class="bi bi-arrow-left me-1"></i> Change Payment Method
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="text-center mt-4">
+                <p class="small text-muted mb-0"><i class="bi bi-shield-lock-fill me-1"></i> Your personal information is encrypted and secure.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+document.getElementById('razorpay-btn')?.addEventListener('click', async function() {
+    const addressId = document.querySelector('input[name="address_id"]:checked')?.value;
+    if (!addressId) {
+        alert("Please select a shipping address first.");
+        return;
+    }
+    
+    this.disabled = true;
+    this.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Connecting...';
+    
+    try {
+        const response = await fetch("{{ url_for('user.razorpay_checkout') }}", {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ address_id: addressId })
+        });
+        
+        const data = await response.json();
+        
+        if (data.error) {
+            alert(data.error);
+            location.reload();
+            return;
+        }
+
+        const options = {
+            "key": data.key,
+            "amount": data.amount_paise,
+            "currency": data.currency || "INR",
+            "name": "DermIQ Skincare",
+            "description": "Professional Skincare Order - Final Validation",
+            "image": window.location.origin + "{{ url_for('static', filename='images/logo.png') }}",
+            "order_id": data.order_id,
+            "notes": {
+                "user": data.user_name,
+                "order_ref": data.order_id
+            },
+            "handler": async function (response) {
+                const verifyRes = await fetch("{{ url_for('user.razorpay_verify') }}", {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        razorpay_order_id: response.razorpay_order_id,
+                        razorpay_payment_id: response.razorpay_payment_id,
+                        razorpay_signature: response.razorpay_signature,
+                        address_id: addressId
+                    })
+                });
+                
+                const result = await verifyRes.json();
+                if (result.status === 'success') {
+                    window.location.href = "{{ url_for('user.profile') }}";
+                } else {
+                    alert("Payment verification failed: " + result.error);
+                }
+            },
+            "prefill": {
+                "name": data.user_name,
+                "email": data.user_email,
+                "contact": data.user_phone
+            },
+            "theme": { "color": "#2A2A2A" }
+        };
+        
+        const rzp = new Razorpay(options);
+        
+        rzp.on('payment.failed', function (response) {
+            alert("Payment failed: " + response.error.description);
+            // Re-enable button on failure
+            const btn = document.getElementById('razorpay-btn');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-wallet2 me-2"></i>Proceed to Secure Payment';
+        });
+
+        rzp.open();
+        this.disabled = false;
+        this.innerHTML = '<i class="bi bi-wallet2 me-2"></i>Proceed to Secure Payment';
+    } catch (err) {
+        alert("System Error: " + err);
+        location.reload();
+    }
+});
+</script>
+
+<style>
+.cursor-pointer { cursor: pointer; }
+.btn-check:checked + .card {
+    border-color: var(--primary) !important;
+    background-color: white !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08) !important;
+}
+.address-card .card:hover {
+    background-color: #f8f9fa !important;
+}
+.line-clamp-1 {
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    line-clamp: 1;
+    -webkit-box-orient: vertical;  
+    overflow: hidden;
+}
+.glass-card {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+.shadow-inner {
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+}
+.rounded-pill-start {
+    border-top-left-radius: 50rem !important;
+    border-bottom-left-radius: 50rem !important;
+}
+.rounded-pill-end {
+    border-top-right-radius: 50rem !important;
+    border-bottom-right-radius: 50rem !important;
+}
+.divider {
+    display: flex;
+    align-items: center;
+    text-align: center;
+}
+.divider::before,
+.divider::after {
+    content: '';
+    flex: 1;
+    border-bottom: 1px solid #eee;
+}
+.divider:not(:empty)::before {
+    margin-right: .5em;
+}
+.divider:not(:empty)::after {
+    margin-left: .5em;
+}
+</style>
+{% endblock %}

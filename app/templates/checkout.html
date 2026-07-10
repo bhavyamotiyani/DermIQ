@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+{% block title %}Checkout | DermIQ{% endblock %}
+{% block content %}
+<div class="container py-4 mt-4">
+    <div class="row align-items-center mb-5">
+        <div class="col-auto">
+            <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                <i class="bi bi-check2-circle fs-3"></i>
+            </div>
+        </div>
+        <div class="col">
+            <h2 class="fw-bold mb-0">Checkout Verification</h2>
+            <p class="text-muted mb-0">Almost there! Finalize your professional skincare order</p>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="card glass-card shadow-sm border-0 rounded-4 p-4 mb-4">
+                <h5 class="fw-bold mb-4"><i class="bi bi-geo-alt me-2 text-primary"></i>Delivery Address</h5>
+                <form id="checkout-form">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label small text-muted text-uppercase fw-bold">Full Name</label>
+                            <input type="text" class="form-control bg-light border-0 py-2" value="{{ current_user.name }}" readonly>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small text-muted text-uppercase fw-bold">Email</label>
+                            <input type="email" class="form-control bg-light border-0 py-2" value="{{ current_user.email }}" readonly>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small text-muted text-uppercase fw-bold">Contact Number</label>
+                            <input type="tel" class="form-control py-2" name="phone" placeholder="+91 XXXX XXX XXX" value="{{ default_address.phone if default_address else '' }}" required>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label small text-muted text-uppercase fw-bold">Shipping Address</label>
+                            <textarea class="form-control py-2" rows="3" name="street_address" placeholder="Flat No, Street Name, Area, Landmark" required>{{ default_address.street_address if default_address else '' }}</textarea>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small text-muted text-uppercase fw-bold">City</label>
+                            <input type="text" class="form-control py-2" name="city" placeholder="City" value="{{ default_address.city if default_address else '' }}" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small text-muted text-uppercase fw-bold">State</label>
+                            {% set indian_states = [
+                                'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh', 'Goa', 'Gujarat', 
+                                'Haryana', 'Himachal Pradesh', 'Jharkhand', 'Karnataka', 'Kerala', 'Madhya Pradesh', 
+                                'Maharashtra', 'Manipur', 'Meghalaya', 'Mizoram', 'Nagaland', 'Odisha', 'Punjab', 
+                                'Rajasthan', 'Sikkim', 'Tamil Nadu', 'Telangana', 'Tripura', 'Uttar Pradesh', 
+                                'Uttarakhand', 'West Bengal', 'Andaman and Nicobar Islands', 'Chandigarh', 
+                                'Dadra and Nagar Haveli and Daman and Diu', 'Delhi', 'Jammu and Kashmir', 'Ladakh', 
+                                'Lakshadweep', 'Puducherry'
+                            ] %}
+                            <select class="form-select py-2" name="state" required>
+                                <option value="" disabled {% if not default_address or not default_address.state %}selected{% endif %}>Select State</option>
+                                {% for st in indian_states %}
+                                <option value="{{ st }}" {% if default_address and default_address.state == st %}selected{% endif %}>{{ st }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small text-muted text-uppercase fw-bold">Pincode</label>
+                            <input type="text" class="form-control py-2" name="pin_code" placeholder="Pincode" value="{{ default_address.pin_code if default_address else '' }}" required>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <div class="card glass-card shadow-sm border-0 rounded-4 p-4">
+                <h5 class="fw-bold mb-4"><i class="bi bi-box me-2 text-primary"></i>Review Items ({{ cart_items|length }})</h5>
+                {% for item in cart_items %}
+                <div class="d-flex align-items-center mb-3 {% if not loop.last %}pb-3 border-bottom border-light{% endif %}">
+                    <div class="bg-light rounded p-2 me-3 d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                        <i class="bi bi-droplet text-primary"></i>
+                    </div>
+                    <div class="flex-grow-1">
+                        <h6 class="mb-0 fw-bold">{{ item.product.name }}</h6>
+                        <small class="text-muted">Quantity: {{ item.quantity }} × ₹{{ item.product.price }}</small>
+                    </div>
+                    <div class="fw-bold">₹{{ "%.2f"|format(item.product.price * item.quantity) }}</div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm rounded-4 p-4 sticky-top" style="top: 100px;">
+                <h5 class="fw-bold mb-4">Total Payable</h5>
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="text-muted">Subtotal</span>
+                    <span class="fw-medium">₹{{ "%.2f"|format(total) }}</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="text-muted">Shipping</span>
+                    <span class="text-success fw-medium">FREE</span>
+                </div>
+                <div class="d-flex justify-content-between mb-4 border-top pt-3 mt-2">
+                    <span class="fw-bold fs-4">Amount Due</span>
+                    <span class="fw-bold fs-4 text-primary">₹{{ "%.2f"|format(total) }}</span>
+                </div>
+
+                <button type="button" id="proceed-button" class="btn btn-primary btn-gradient w-100 py-3 rounded-pill fw-bold shadow-sm transition-all hover-lift">
+                    Proceed to Payment <i class="bi bi-credit-card ms-2"></i>
+                </button>
+                
+                <a href="{{ url_for('user.view_cart') }}" class="btn btn-link w-100 text-muted small mt-3 text-decoration-none">
+                    <i class="bi bi-pencil me-1"></i> Edit Cart
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('proceed-button').addEventListener('click', function() {
+    const form = document.getElementById('checkout-form');
+    if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+    }
+    // If valid, submit form using POST
+    form.method = "POST";
+    form.action = "{{ url_for('user.checkout') }}";
+    form.submit();
+});
+</script>
+{% endblock %}

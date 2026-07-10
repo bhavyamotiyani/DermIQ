@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+{% block title %}Sign Up - Skincare Analytics{% endblock %}
+
+{% block content %}
+<div class="auth-page pt-5">
+    <div class="container">
+        <div class="row justify-content-center align-items-center" style="min-height: 80vh;">
+            <div class="col-md-7">
+                <div class="auth-card glass-card p-5 rounded-4 shadow-sm border-0">
+                    <div class="text-center mb-4">
+                        <div class="brand-icon mx-auto mb-3 bg-light text-dark rounded-circle shadow-sm"
+                            style="width: 60px; height: 60px; font-size: 2rem;">
+                            <i class="bi bi-droplet-fill"></i>
+                        </div>
+                        <h2>Create Account</h2>
+                        <p class="text-muted">Join us for personalized skincare recommendations</p>
+                    </div>
+
+                    <form method="POST" action="{{ url_for('auth.register') }}" id="signupForm" novalidate>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="first_name" class="form-label">First Name</label>
+                                <input type="text" class="form-control" id="first_name" name="first_name" required
+                                    minlength="2" pattern="[A-Za-z]+" placeholder="First Name">
+                                <div class="invalid-feedback">First name required (letters only, min 2 chars).</div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="last_name" class="form-label">Last Name</label>
+                                <input type="text" class="form-control" id="last_name" name="last_name" required
+                                    minlength="2" pattern="[A-Za-z]+" placeholder="Last Name">
+                                <div class="invalid-feedback">Last name required (letters only, min 2 chars).</div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email Address</label>
+                            <input type="email" class="form-control" id="email" name="email" required
+                                placeholder="you@example.com">
+                            <div class="invalid-feedback">Please enter a valid email address.</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="skin_type" class="form-label">Skin Type</label>
+                            <select class="form-select" id="skin_type" name="skin_type" required>
+                                <option value="">Select your skin type</option>
+                                <option value="oily">Oily</option>
+                                <option value="dry">Dry</option>
+                                <option value="combination">Combination</option>
+                                <option value="sensitive">Sensitive</option>
+                                <option value="normal">Normal</option>
+                            </select>
+                            <div class="invalid-feedback">Please select your skin type.</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label text-muted small fw-bold text-uppercase">Skin Concerns
+                                (Optional)</label>
+                            <div class="d-flex flex-wrap gap-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="concerns" value="acne"
+                                        id="concern_acne">
+                                    <label class="form-check-label" for="concern_acne">Acne</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="concerns" value="dryness"
+                                        id="concern_dryness">
+                                    <label class="form-check-label" for="concern_dryness">Dryness</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="concerns" value="sensitivity"
+                                        id="concern_sensitivity">
+                                    <label class="form-check-label" for="concern_sensitivity">Sensitivity</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="concerns" value="pigmentation"
+                                        id="concern_pigmentation">
+                                    <label class="form-check-label" for="concern_pigmentation">Pigmentation</label>
+                                </div>
+                            </div>
+                        </div>
+
+
+
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Password</label>
+                            <input type="password" class="form-control" id="password" name="password" required
+                                minlength="6" placeholder="Minimum 6 characters">
+                            <div class="invalid-feedback">Password must be at least 6 characters.</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="confirm_password" class="form-label">Confirm Password</label>
+                            <input type="password" class="form-control" id="confirm_password" name="confirm_password"
+                                required minlength="6" placeholder="Re-enter your password">
+                            <div class="invalid-feedback">Passwords must match.</div>
+                        </div>
+
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="terms" required>
+                            <label class="form-check-label" for="terms">
+                                I agree to the Terms and Conditions
+                            </label>
+                            <div class="invalid-feedback">You must agree before submitting.</div>
+                        </div>
+
+                        <button type="submit" class="btn btn-gradient w-100 mb-3">Create Account</button>
+
+                        <div class="text-center">
+                            <p class="mb-0">Already have an account? <a href="{{ url_for('auth.login') }}"
+                                    class="text-decoration-none" style="color: var(--accent);">Login</a></p>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Password confirmation validation
+    const form = document.getElementById('signupForm');
+    const password = document.getElementById('password');
+    const confirmPassword = document.getElementById('confirm_password');
+
+    form.addEventListener('submit', function (e) {
+        if (password.value !== confirmPassword.value) {
+            e.preventDefault();
+            confirmPassword.setCustomValidity('Passwords do not match');
+        } else {
+            confirmPassword.setCustomValidity('');
+        }
+
+        if (!form.checkValidity()) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        form.classList.add('was-validated');
+    });
+
+    confirmPassword.addEventListener('input', function () {
+        if (this.value === password.value) {
+            this.setCustomValidity('');
+        }
+    });
+</script>
+{% endblock %}

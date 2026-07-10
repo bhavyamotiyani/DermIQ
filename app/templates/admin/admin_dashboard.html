@@ -1,0 +1,357 @@
+{% extends "admin/admin_base.html" %}
+{% block title %}Admin Dashboard | DermIQ{% endblock %}
+{% block content %}
+<style>
+    .hover-lift { transition: transform 0.2s ease, box-shadow 0.2s ease; }
+    .hover-lift:hover { transform: translateY(-3px); box-shadow: 0 .5rem 1rem rgba(0,0,0,.15)!important; }
+    .stat-card { border-left: 4px solid; }
+    .border-primary { border-left-color: var(--bs-primary)!important; }
+    .border-success { border-left-color: var(--bs-success)!important; }
+    .border-info { border-left-color: var(--bs-info)!important; }
+    .border-warning { border-left-color: var(--bs-warning)!important; }
+</style>
+<div class="container-fluid">
+    <div class="row mb-5 align-items-center">
+        <div class="col-8">
+            <h2 class="fw-bold mb-0">Platform Overview</h2>
+            <p class="text-muted mb-0 mt-1">Monitor your business metrics, users, and catalog operations.</p>
+        </div>
+        <div class="col-4 text-end">
+            <a href="{{ url_for('admin.products') }}" class="btn btn-primary rounded-pill px-4 fw-medium"><i class="bi bi-plus-lg me-1"></i> Manage Products</a>
+        </div>
+    </div>
+
+<div class="row g-4 mb-5">
+        <!-- Main Stats (Existing) -->
+        <div class="col-sm-6 col-xl-3">
+            <div class="card glass-card shadow-sm border-0 stat-card border-primary h-100 hover-lift">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <p class="text-muted fw-bold text-uppercase letter-spacing-1 mb-2" style="font-size: 0.8rem;">Products</p>
+                            <h3 class="fw-bold mb-0">{{ total_products }}</h3>
+                        </div>
+                        <div class="bg-primary bg-opacity-10 rounded-circle p-3 d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                            <i class="bi bi-box-seam fs-4 text-primary"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-sm-6 col-xl-3">
+            <div class="card glass-card shadow-sm border-0 stat-card border-success h-100 hover-lift">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <p class="text-muted fw-bold text-uppercase letter-spacing-1 mb-2" style="font-size: 0.8rem;">Active Users</p>
+                            <h3 class="fw-bold mb-0">{{ total_users }}</h3>
+                        </div>
+                        <div class="bg-success bg-opacity-10 rounded-circle p-3 d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                            <i class="bi bi-people fs-4 text-success"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-sm-6 col-xl-3">
+            <div class="card glass-card shadow-sm border-0 stat-card border-info h-100 hover-lift">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <p class="text-muted fw-bold text-uppercase letter-spacing-1 mb-2" style="font-size: 0.8rem;">Transactions</p>
+                            <h3 class="fw-bold mb-0">{{ total_transactions }}</h3>
+                        </div>
+                        <div class="bg-info bg-opacity-10 rounded-circle p-3 d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                            <i class="bi bi-receipt fs-4 text-info"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-sm-6 col-xl-3">
+            <div class="card glass-card shadow-sm border-0 stat-card border-warning h-100 hover-lift">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <p class="text-muted fw-bold text-uppercase letter-spacing-1 mb-2" style="font-size: 0.8rem;">Total Revenue</p>
+                            <h3 class="fw-bold mb-0">₹{{ "{:,.2f}".format(total_revenue|default(0.0)) }}</h3>
+                        </div>
+                        <div class="bg-warning bg-opacity-10 rounded-circle p-3 d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                            <i class="bi bi-currency-rupee fs-4 text-warning"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Analytics Charts Row 1 -->
+    <div class="row g-4 mb-4">
+        <!-- Chart 1: Revenue & Orders Trend -->
+        <div class="col-lg-8">
+            <div class="card glass-card shadow-sm border-0 rounded-4 h-100">
+                <div class="card-body p-4">
+                    <h5 class="fw-bold mb-4">Sales Performance (Bar + Line)</h5>
+                    <div style="height: 350px;">
+                        <canvas id="revenueOrdersChart"></canvas>
+                    </div>
+                    <p class="text-muted small mt-3 mb-0"><i class="bi bi-info-circle me-1"></i> Multi-dataset analysis: Bars represent Revenue (₹), Line represents Order Volume.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chart 2: Skin Type Distribution -->
+        <div class="col-lg-4">
+            <div class="card glass-card shadow-sm border-0 rounded-4 h-100">
+                <div class="card-body p-4">
+                    <h5 class="fw-bold mb-4">Skin Types (Doughnut)</h5>
+                    <div style="height: 350px; display: flex; align-items: center; justify-content: center;">
+                        <canvas id="skinTypeChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Analytics Charts Row 2 -->
+    <div class="row g-4 mb-5">
+        <!-- Chart 3: Top Products -->
+        <div class="col-md-6 col-lg-4">
+            <div class="card glass-card shadow-sm border-0 rounded-4 h-100">
+                <div class="card-body p-4">
+                    <h5 class="fw-bold mb-4">Top 5 Products</h5>
+                    <div style="height: 300px;">
+                        <canvas id="topProductsChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chart 4: User Concerns -->
+        <div class="col-md-6 col-lg-4">
+            <div class="card glass-card shadow-sm border-0 rounded-4 h-100">
+                <div class="card-body p-4">
+                    <h5 class="fw-bold mb-4">Top User Concerns</h5>
+                    <div style="height: 300px;">
+                        <canvas id="concernsRadarChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chart 5: Age Group -->
+        <div class="col-md-12 col-lg-4">
+            <div class="card glass-card shadow-sm border-0 rounded-4 h-100">
+                <div class="card-body p-4">
+                    <h5 class="fw-bold mb-4">User Demographics</h5>
+                    <div style="height: 300px;">
+                        <canvas id="ageGroupChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Access Actions (Existing) -->
+    <h4 class="fw-bold mb-4">Quick Operations</h4>
+    <div class="row g-4 mb-5">
+        <div class="col-md-4">
+            <a href="{{ url_for('admin.products') }}" class="text-decoration-none text-dark">
+                <div class="card glass-card border flex-row align-items-center p-4 hover-lift shadow-sm h-100 rounded-4">
+                    <h2 class="text-primary mb-0 me-4"><i class="bi bi-boxes"></i></h2>
+                    <div>
+                        <h6 class="fw-bold mb-1">Product Catalog</h6>
+                        <small class="text-muted d-block">Add or edit store products.</small>
+                    </div>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-4">
+            <a href="{{ url_for('admin.users') }}" class="text-decoration-none text-dark">
+                <div class="card glass-card border flex-row align-items-center p-4 hover-lift shadow-sm h-100 rounded-4">
+                    <h2 class="text-success mb-0 me-4"><i class="bi bi-people-fill"></i></h2>
+                    <div>
+                        <h6 class="fw-bold mb-1">User Management</h6>
+                        <small class="text-muted d-block">Manage profiles & roles.</small>
+                    </div>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-4">
+            <a href="{{ url_for('admin.transactions') }}" class="text-decoration-none text-dark">
+                <div class="card glass-card border flex-row align-items-center p-4 hover-lift shadow-sm h-100 rounded-4">
+                    <h2 class="text-info mb-0 me-4"><i class="bi bi-wallet2"></i></h2>
+                    <div>
+                        <h6 class="fw-bold mb-1">Sales Ledger</h6>
+                        <small class="text-muted d-block">Monitor transaction logs.</small>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js Support -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // --- Data from Backend ---
+        const monthlyLabels = {{ monthly_data|map(attribute='month')|list|tojson|safe }};
+        const monthlyRevenue = {{ monthly_data|map(attribute='revenue')|list|tojson|safe }};
+        const monthlyOrders = {{ monthly_data|map(attribute='orders')|list|tojson|safe }};
+        
+        const skinTypeLabels = {{ skin_types.keys()|list|tojson|safe }};
+        const skinTypeData = {{ skin_types.values()|list|tojson|safe }};
+        
+        const topProductLabels = {{ top_products.keys()|list|tojson|safe }};
+        const topProductData = {{ top_products.values()|list|tojson|safe }};
+        
+        const concernLabels = {{ concern_counts.keys()|list|tojson|safe }};
+        const concernData = {{ concern_counts.values()|list|tojson|safe }};
+        
+        const ageGroupLabels = {{ age_groups.keys()|list|tojson|safe }};
+        const ageGroupData = {{ age_groups.values()|list|tojson|safe }};
+
+        const themeColors = {
+            primary: '#0d6efd',
+            success: '#198754',
+            info: '#0dcaf0',
+            warning: '#ffc107',
+            danger: '#dc3545',
+            muted: '#6c757d'
+        };
+
+        // --- Chart 1: Revenue & Orders (Monthly) ---
+        const monthlyCtx = document.getElementById('revenueOrdersChart').getContext('2d');
+        new Chart(monthlyCtx, {
+            type: 'bar',
+            data: {
+                labels: monthlyLabels,
+                datasets: [
+                    {
+                        label: 'Revenue (₹)',
+                        data: monthlyRevenue,
+                        backgroundColor: 'rgba(13, 110, 253, 0.5)',
+                        borderColor: themeColors.primary,
+                        borderWidth: 1,
+                        yAxisID: 'yRev',
+                        order: 2
+                    },
+                    {
+                        label: 'Orders',
+                        data: monthlyOrders,
+                        type: 'line',
+                        borderColor: '#0f3460',
+                        backgroundColor: '#0f3460',
+                        pointStyle: 'circle',
+                        pointRadius: 6,
+                        tension: 0.4,
+                        yAxisID: 'yQty',
+                        order: 1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: { mode: 'index', intersect: false },
+                scales: {
+                    yRev: { type: 'linear', position: 'left', title: { display: true, text: 'Revenue (₹)' } },
+                    yQty: { type: 'linear', position: 'right', grid: { drawOnChartArea: false }, title: { display: true, text: 'Orders Count' } }
+                }
+            }
+        });
+
+        // --- Chart 2: Skin Type Distribution ---
+        const skinTypeCtx = document.getElementById('skinTypeChart').getContext('2d');
+        new Chart(skinTypeCtx, {
+            type: 'doughnut',
+            data: {
+                labels: {{ skin_types.keys()|list|tojson }},
+                datasets: [{
+                    data: {{ skin_types.values()|list|tojson }},
+                    backgroundColor: [themeColors.primary, themeColors.success, themeColors.warning, themeColors.info, '#6610f2'],
+                    hoverOffset: 15
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'bottom' } }
+            }
+        });
+
+        // --- Chart 3: Top Products (Horizontal Bar) ---
+        const productsCtx = document.getElementById('topProductsChart').getContext('2d');
+        new Chart(productsCtx, {
+            type: 'bar',
+            data: {
+                labels: {{ top_products.keys()|list|tojson }},
+                datasets: [{
+                    label: 'Units Sold',
+                    data: {{ top_products.values()|list|tojson }},
+                    backgroundColor: themeColors.primary,
+                    borderRadius: 5
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } }
+            }
+        });
+
+        // --- Chart 4: User Concerns (Radar) ---
+        const concernsCtx = document.getElementById('concernsRadarChart').getContext('2d');
+        new Chart(concernsCtx, {
+            type: 'radar',
+            data: {
+                labels: {{ concern_counts.keys()|list|tojson }},
+                datasets: [{
+                    label: 'Prevalence',
+                    data: {{ concern_counts.values()|list|tojson }},
+                    fill: true,
+                    backgroundColor: 'rgba(233, 69, 96, 0.2)',
+                    borderColor: '#e94560',
+                    pointBackgroundColor: '#e94560',
+                    pointBorderColor: '#fff',
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderColor: '#e94560'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: { r: { angleLines: { display: false }, suggestMin: 0 } }
+            }
+        });
+
+        // --- Chart 5: Age Group (Vertical Bar) ---
+        const ageCtx = document.getElementById('ageGroupChart').getContext('2d');
+        new Chart(ageCtx, {
+            type: 'bar',
+            data: {
+                labels: {{ age_groups.keys()|list|tojson }},
+                datasets: [{
+                    label: 'User Count',
+                    data: {{ age_groups.values()|list|tojson }},
+                    backgroundColor: themeColors.success,
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true } }
+            }
+        });
+    });
+</script>
+{% endblock %}
+
+

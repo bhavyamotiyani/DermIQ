@@ -1,0 +1,353 @@
+{% extends "base.html" %}
+{% block title %}Skin Analysis Quiz | DermIQ Intelligence{% endblock %}
+
+{% block content %}
+<div class="quiz-container py-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="glass-quiz-card glass-card p-4 p-md-5 rounded-5 shadow-lg border-0 bg-white bg-opacity-75 backdrop-blur-md">
+                    <div class="quiz-header text-center mb-5">
+                        <div class="brand-icon mx-auto mb-3 bg-white text-primary rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 70px; height: 70px; font-size: 2.5rem; border: 2px solid rgba(13, 110, 253, 0.1);">
+                            <i class="bi bi-stars"></i>
+                        </div>
+                        <h2 class="fw-bold display-6 mb-2 text-primary opacity-75" style="font-family: 'Playfair Display', serif;">Deep Skin Analysis</h2>
+                        <p class="text-muted lead fst-italic">Let's decode your skin's unique biological fingerprint</p>
+                        
+                        <div class="mt-5 pt-2">
+                            <!-- Progress Bar moved above status text -->
+                            <div class="progress rounded-pill shadow-inner" style="height: 6px; background: rgba(0,0,0,0.05); margin: 0 auto; max-width: 500px;">
+                                <div id="quizProgress" class="progress-bar progress-bar-animated rounded-pill" role="progressbar" style="width: 16.66%; background: #0d6efd; transition: width 0.4s ease;"></div>
+                            </div>
+                            <p class="text-center small mt-2 fw-semibold text-muted" id="quizStatusText">Question 1 of 6</p>
+                        </div>
+                    </div>
+
+                    <form id="skinAnalysisForm" method="POST" action="{{ url_for('user.analysis') }}">
+                        <!-- Step 1: Feel -->
+                        <div class="quiz-step active" id="step1">
+                            <h4 class="mb-4 text-center fw-bold">How does your skin feel mid-day?</h4>
+                            <div class="quiz-options-list d-flex flex-wrap gap-3 justify-content-center">
+                                <label class="quiz-option-item">
+                                    <input type="radio" name="q1" value="oily" required>
+                                    <div class="quiz-option-box text-center p-4 h-100">
+                                        <i class="bi bi-droplet-half fs-1 mb-3 text-primary"></i>
+                                        <h5>Shiny and Oily</h5>
+                                        <p class="text-muted small mb-0">Oil covers my entire face</p>
+                                    </div>
+                                </label>
+                                <label class="quiz-option-item">
+                                    <input type="radio" name="q1" value="dry">
+                                    <div class="quiz-option-box text-center p-4 h-100">
+                                        <i class="bi bi-moisture fs-1 mb-3 text-primary"></i>
+                                        <h5>Tight and Flaky</h5>
+                                        <p class="text-muted small mb-0">Feels restricted or dehydrated</p>
+                                    </div>
+                                </label>
+                                <label class="quiz-option-item">
+                                    <input type="radio" name="q1" value="combination">
+                                    <div class="quiz-option-box text-center p-4 h-100">
+                                        <i class="bi bi-circle-half fs-1 mb-3 text-primary"></i>
+                                        <h5>Mixed Texture</h5>
+                                        <p class="text-muted small mb-0">Oily T-zone, dry elsewhere</p>
+                                    </div>
+                                </label>
+                                <label class="quiz-option-item">
+                                    <input type="radio" name="q1" value="normal">
+                                    <div class="quiz-option-box text-center p-4 h-100">
+                                        <i class="bi bi-check-circle fs-1 mb-3 text-success"></i>
+                                        <h5>Comfortable</h5>
+                                        <p class="text-muted small mb-0">Balanced and healthy feeling</p>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Step 2: Breakouts -->
+                        <div class="quiz-step d-none" id="step2">
+                            <h4 class="mb-4 text-center fw-bold">How often do you experience breakouts?</h4>
+                            <div class="quiz-options-list d-flex flex-wrap gap-3 justify-content-center">
+                                <label class="quiz-option-item">
+                                    <input type="radio" name="q2" value="frequent" required>
+                                    <div class="quiz-option-box text-center p-4 h-100">
+                                        <h5>Frequently</h5>
+                                        <p class="text-muted small mb-0">I deal with acne almost weekly</p>
+                                    </div>
+                                </label>
+                                <label class="quiz-option-item">
+                                    <input type="radio" name="q2" value="occasionally">
+                                    <div class="quiz-option-box text-center p-4 h-100">
+                                        <h5>Occasionally</h5>
+                                        <p class="text-muted small mb-0">Maybe once a month or less</p>
+                                    </div>
+                                </label>
+                                <label class="quiz-option-item">
+                                    <input type="radio" name="q2" value="rarely">
+                                    <div class="quiz-option-box text-center p-4 h-100">
+                                        <h5>Rarely</h5>
+                                        <p class="text-muted small mb-0">I almost never get pimples</p>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Step 3: Sensitivity -->
+                        <div class="quiz-step d-none" id="step3">
+                            <h4 class="mb-4 text-center fw-bold">How does your skin react to new products?</h4>
+                            <div class="quiz-options-list d-flex flex-wrap gap-3 justify-content-center">
+                                <label class="quiz-option-item">
+                                    <input type="radio" name="q3" value="sensitive" required>
+                                    <div class="quiz-option-box text-center p-4 h-100">
+                                        <h5>Reactive</h5>
+                                        <p class="text-muted small mb-0">Often gets red, itchy or burns</p>
+                                    </div>
+                                </label>
+                                <label class="quiz-option-item">
+                                    <input type="radio" name="q3" value="mild">
+                                    <div class="quiz-option-box text-center p-4 h-100">
+                                        <h5>Slightly Sensitive</h5>
+                                        <p class="text-muted small mb-0">Only some active ingredients hurt</p>
+                                    </div>
+                                </label>
+                                <label class="quiz-option-item">
+                                    <input type="radio" name="q3" value="strong">
+                                    <div class="quiz-option-box text-center p-4 h-100">
+                                        <h5>Very Resilient</h5>
+                                        <p class="text-muted small mb-0">Can handle almost anything</p>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Step 4: Pores -->
+                        <div class="quiz-step d-none" id="step4">
+                            <h4 class="mb-4 text-center fw-bold">Do you notice visible pores?</h4>
+                            <div class="quiz-options-list d-flex flex-wrap gap-3 justify-content-center">
+                                <label class="quiz-option-item">
+                                    <input type="radio" name="q4" value="large" required>
+                                    <div class="quiz-option-box text-center p-4 h-100">
+                                        <h5>Yes, Large Pores</h5>
+                                        <p class="text-muted small mb-0">Especially on my nose and cheeks</p>
+                                    </div>
+                                </label>
+                                <label class="quiz-option-item">
+                                    <input type="radio" name="q4" value="medium">
+                                    <div class="quiz-option-box text-center p-4 h-100">
+                                        <h5>Somewhat</h5>
+                                        <p class="text-muted small mb-0">Visible but only in certain zones</p>
+                                    </div>
+                                </label>
+                                <label class="quiz-option-item">
+                                    <input type="radio" name="q4" value="invisible">
+                                    <div class="quiz-option-box text-center p-4 h-100">
+                                        <h5>Invisible</h5>
+                                        <p class="text-muted small mb-0">My pores are not noticeable at all</p>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Step 5: Dark Spots -->
+                        <div class="quiz-step d-none" id="step5">
+                            <h4 class="mb-4 text-center fw-bold">Do you have visible dark spots or uneven tone?</h4>
+                            <div class="quiz-options-list d-flex flex-wrap gap-3 justify-content-center">
+                                <label class="quiz-option-item">
+                                    <input type="radio" name="q5" value="yes" required>
+                                    <div class="quiz-option-box text-center p-4 h-100">
+                                        <h5>Yes, Visible</h5>
+                                        <p class="text-muted small mb-0">Pigmentation, melasma, or post-acne marks</p>
+                                    </div>
+                                </label>
+                                <label class="quiz-option-item">
+                                    <input type="radio" name="q5" value="no">
+                                    <div class="quiz-option-box text-center p-4 h-100">
+                                        <h5>No, Clear</h5>
+                                        <p class="text-muted small mb-0">My skin tone is mostly even</p>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Step 6: Post-Wash Tightness -->
+                        <div class="quiz-step d-none" id="step6">
+                            <h4 class="mb-4 text-center fw-bold">Does your skin feel tight immediately after washing?</h4>
+                            <div class="quiz-options-list d-flex flex-wrap gap-3 justify-content-center">
+                                <label class="quiz-option-item">
+                                    <input type="radio" name="q6" value="yes" required>
+                                    <div class="quiz-option-box text-center p-4 h-100">
+                                        <h5>Yes, Very Tight</h5>
+                                        <p class="text-muted small mb-0">I need moisturizer immediately</p>
+                                    </div>
+                                </label>
+                                <label class="quiz-option-item">
+                                    <input type="radio" name="q6" value="no">
+                                    <div class="quiz-option-box text-center p-4 h-100">
+                                        <h5>No, Comfortable</h5>
+                                        <p class="text-muted small mb-0">Feels fine even without cream</p>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="quiz-navigation mt-5 d-flex justify-content-between align-items-center pt-4 border-top border-light">
+                            <button type="button" class="btn btn-outline-secondary rounded-pill px-4 py-2 d-none" id="prevBtn" onclick="nextStep(-1)">
+                                <i class="bi bi-arrow-left-short"></i> Previous
+                            </button>
+                            <div class="flex-grow-1"></div>
+                            <button type="button" class="btn btn-primary rounded-pill px-4 py-2 shadow-sm" id="nextBtn" onclick="nextStep(1)">
+                                Next Question <i class="bi bi-arrow-right-short ms-1"></i>
+                            </button>
+                            <button type="submit" class="btn btn-gradient rounded-pill px-4 py-2 shadow-lg d-none" id="submitBtn">
+                                Complete Analysis <i class="bi bi-check2-circle ms-1"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .glass-quiz-card {
+        background: rgba(255, 255, 255, 0.7);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+    
+    .quiz-option-item input {
+        position: absolute;
+        opacity: 0;
+        cursor: pointer;
+    }
+    
+    .quiz-option-box {
+        background: rgba(0, 0, 0, 0.02);
+        border: 2px solid transparent;
+        border-radius: 1.25rem;
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        cursor: pointer;
+    }
+    
+    .quiz-option-item input:checked + .quiz-option-box {
+        background: rgba(52, 152, 219, 0.08);
+        border-color: #3498db;
+        transform: translateY(-4px);
+        box-shadow: 0 10px 25px rgba(52, 152, 219, 0.1);
+    }
+    
+    .quiz-option-box:hover {
+        background: rgba(0, 0, 0, 0.04);
+        transform: translateY(-2px);
+    }
+    
+    .quiz-option-box h5 {
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        color: var(--text-dark);
+        font-size: 1.1rem;
+    }
+
+    .quiz-option-item {
+        flex: 1 1 200px;
+        max-width: 280px;
+    }
+    
+    @media (max-width: 576px) {
+        .quiz-option-item {
+            flex: 1 1 100%;
+            max-width: 100%;
+        }
+        .quiz-navigation {
+            flex-direction: column-reverse;
+            gap: 0.75rem;
+        }
+        .quiz-navigation button {
+            width: 100% !important;
+            padding: 0.75rem 1rem !important;
+        }
+        .quiz-navigation .flex-grow-1 {
+            display: none;
+        }
+    }
+    
+    .btn-gradient {
+        background: linear-gradient(135deg, #e94560 0%, #0f3460 100%);
+        border: none;
+        color: white;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+    }
+    
+    .btn-gradient:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px rgba(15, 52, 96, 0.3);
+        color: white;
+    }
+
+    .border-light {
+        border-color: rgba(0,0,0,0.05) !important;
+    }
+</style>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let currentStep = 1;
+    const totalSteps = 6;
+    
+    function nextStep(n) {
+        const currentStepEl = document.getElementById(`step${currentStep}`);
+        
+        // Validation for forward movement
+        if (n === 1) {
+            const inputs = currentStepEl.querySelectorAll('input');
+            const checked = Array.from(inputs).some(i => i.checked);
+            if (!checked) {
+                alert("Please select one option to continue.");
+                return;
+            }
+        }
+        
+        // Hide current step
+        currentStepEl.classList.add('d-none');
+        currentStep += n;
+        
+        // Show next step
+        const nextStepEl = document.getElementById(`step${currentStep}`);
+        nextStepEl.classList.remove('d-none');
+        
+        updateNavigation();
+        updateProgress();
+    }
+    
+    function updateNavigation() {
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const submitBtn = document.getElementById('submitBtn');
+        
+        // Back Button
+        if (currentStep === 1) {
+            prevBtn.classList.add('d-none');
+        } else {
+            prevBtn.classList.remove('d-none');
+        }
+        
+        // Next vs Submit
+        if (currentStep === totalSteps) {
+            nextBtn.classList.add('d-none');
+            submitBtn.classList.remove('d-none');
+        } else {
+            nextBtn.classList.remove('d-none');
+            submitBtn.classList.add('d-none');
+        }
+    }
+    
+    function updateProgress() {
+        const progress = (currentStep / totalSteps) * 100;
+        document.getElementById('quizProgress').style.width = `${progress}%`;
+        document.getElementById('quizStatusText').innerText = `Question ${currentStep} of ${totalSteps}`;
+    }
+</script>
+{% endblock %}

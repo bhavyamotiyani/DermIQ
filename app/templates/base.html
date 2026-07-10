@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+        content="Skincare Analytics Dashboard - Professional data-driven insights for skincare formulation and analysis">
+    <title>{% block title %}Skincare Analytics | Professional Intelligence{% endblock %}</title>
+
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- Fonts and style are imported in CSS -->
+
+    <!-- Custom CSS -->
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+</head>
+
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-glass navbar-light fixed-top">
+        <div class="container-fluid px-4">
+            <a class="navbar-brand d-flex align-items-center" href="{{ url_for('user.index') }}">
+                <div class="brand-icon me-2">
+                    <i class="bi bi-droplet-fill"></i>
+                </div>
+                <span class="brand-text">DermIQ</span>
+            </a>
+
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'user.index' %}active{% endif %}" href="{{ url_for('user.index') }}">
+                            <i class="bi bi-house me-1"></i> Home
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'user.products' %}active{% endif %}" href="{{ url_for('user.products') }}">
+                            <i class="bi bi-shop me-1"></i> Products
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'user.about' %}active{% endif %}" href="{{ url_for('user.about') }}">
+                            <i class="bi bi-info-circle me-1"></i> About
+                        </a>
+                    </li>
+
+                    {% if current_user.is_authenticated %}
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="bi bi-person-circle me-1"></i> {{ current_user.name }}
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end border-0 shadow-sm" aria-labelledby="navbarDropdown">
+                                <li>
+                                    <div class="px-3 py-2 border-bottom">
+                                        <p class="mb-0 fw-bold small">{{ current_user.name }} ({{ current_user.role|title }})</p>
+                                        <p class="mb-0 text-muted small">{{ current_user.email }}</p>
+                                    </div>
+                                </li>
+                                <li><a class="dropdown-item" href="{{ url_for('user.profile') }}"><i class="bi bi-sliders me-2 text-muted"></i>Profile Settings</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item text-danger" href="{{ url_for('auth.logout') }}"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
+                            </ul>
+                        </li>
+                    {% else %}
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.endpoint == 'auth.login' %}active{% endif %}" href="{{ url_for('auth.login') }}">
+                                <i class="bi bi-box-arrow-in-right me-1"></i> Login
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="container-fluid mt-5 pt-4">
+        {% for category, message in messages %}
+        <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show mx-4 mt-3"
+            role="alert">
+            <i
+                class="bi bi-{{ 'exclamation-triangle' if category == 'error' else 'check-circle' if category == 'success' else 'info-circle' }} me-2"></i>
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
+
+    <!-- Main Content -->
+    <main class="main-content">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="row py-5">
+                <!-- About Section -->
+                <div class="col-md-6 mb-4 mb-md-0">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="brand-icon me-2">
+                            <i class="bi bi-droplet-fill"></i>
+                        </div>
+                        <span class="brand-text">DermIQ</span>
+                    </div>
+                    <p class="text-white-50 mb-3" style="max-width: 450px;">
+                        Your intelligent skincare companion. Get science-backed product recommendations tailored to your unique biological skin profile and concerns.
+                    </p>
+                </div>
+
+                <!-- Quick Links -->
+                <div class="col-md-3 mb-4 mb-md-0">
+                    <h6 class="footer-section-title">Navigation</h6>
+                    <ul class="footer-list">
+                        <li><a href="{{ url_for('user.index') }}" class="footer-link">Home</a></li>
+                        <li><a href="{{ url_for('user.products') }}" class="footer-link">Products</a></li>
+                        <li><a href="{{ url_for('user.about') }}" class="footer-link">About Us</a></li>
+                    </ul>
+                </div>
+
+                <!-- Contact -->
+                <div class="col-md-3">
+                    <h6 class="footer-section-title">Get in Touch</h6>
+                    <ul class="footer-list">
+                        <li class="text-white-50 small mb-2"><i class="bi bi-envelope me-2"></i>support@dermiq.com</li>
+                        <li class="text-white-50 small"><i class="bi bi-telephone me-2"></i>+91 9773061563</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Copyright -->
+            <div class="row border-top border-secondary pt-4">
+                <div class="col-md-6 text-center text-md-start mb-2 mb-md-0">
+                    <p class="mb-0 text-white-50">&copy; 2026 DermIQ. All rights reserved.</p>
+                </div>
+                <div class="col-md-6 text-center text-md-end">
+                    <p class="mb-0 text-white-50">Crafted with <i class="bi bi-heart-fill"
+                            style="color: var(--accent);"></i> for beautiful skin</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom JS -->
+    {% block scripts %}{% endblock %}
+</body>
+
+</html>
