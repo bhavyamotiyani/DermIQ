@@ -16,7 +16,7 @@ def save_image(file):
         return None
     
     filename = secure_filename(file.filename)
-    upload_folder = os.path.join('app', 'static', 'uploads', 'products')
+    upload_folder = os.path.join('app', 'static', 'images')
     
     if not os.path.exists(upload_folder):
         os.makedirs(upload_folder)
@@ -25,7 +25,7 @@ def save_image(file):
     file.save(file_path)
     
     # Return file path for URL
-    return url_for('static', filename='uploads/products/' + filename)
+    return url_for('static', filename='images/' + filename)
 
 # Calculate analytics for admin dashboard using basic python loops
 def get_dashboard_analytics():
